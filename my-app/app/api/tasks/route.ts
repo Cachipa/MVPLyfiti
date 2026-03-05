@@ -170,6 +170,39 @@ Descrição: ${description}
   return NextResponse.json(task);
 }
 
+export async function DELETE(request: Request) {
+  // Permite id via query string (?id=...) ou via body JSON { id }
+  const { searchParams } = new URL(request.url);
+  let id = searchParams.get('id');
+
+  if (!id) {
+    try {
+      const body = await request.json();
+      id = body?.id;
+    } catch {
+      // ignora body inválido
+    }
+  }
+
+  if (!id) {
+    return NextResponse.json(
+      { error: 'id da tarefa é obrigatório' },
+      { status: 400 }
+    );
+  }
+
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return NextResponse.json(
+      { error: 'Tarefa não encontrada' },
+      { status: 404 }
+    );
+  }
+
+  const [removed] = tasks.splice(index, 1);
+  return NextResponse.json(removed);
+}
+
 export async function GET() {
   // listar todas as tasks priorizadas
   return NextResponse.json(tasks.sort((a, b) => b.score - a.score));
